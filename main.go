@@ -69,13 +69,13 @@ func main() {
 
 		err = cj.createJobs()
 		if err != nil {
-			logger("createjob error ", err, NEWLINE)
+			loggerDebug("createjob error ", err, NEWLINE)
 			continue
 		}
 
 		err = cj.sendJobs(conn)
 		if err != nil {
-			logger("sendjob error ", err, NEWLINE)
+			loggerDebug("sendjob error ", err, NEWLINE)
 			if err == io.EOF {
 				conn, _ = connect()
 			}
@@ -122,11 +122,7 @@ func makeJob(job *Job, diff uint64) (err error) {
 	h.Write(data)
 
 	job.ExpectedHash = hex.EncodeToString(h.Sum(nil))
-
-	if (*debug) {
-		logger("created job ", *job, NEWLINE)
-	}
-
+	loggerDebug("created job ", *job, NEWLINE)
 	return
 }
 
@@ -149,33 +145,40 @@ func (j *CreateJob) createJobs() (err error) {
 	return
 }
 
+func parseUint(str string) (ret uint64, err error) {
+	str = strings.TrimRight(str, NULL)
+	str = strings.TrimRight(str, NEWLINE)
+	ret, err = strconv.ParseUint(str, 10, 64)
+	return
+}
+
 // parseJobs parses the job request sent from the server.
 func (j *CreateJob) parseJobs(buf *string) (err error) {
 
 	str := strings.Split(string(*buf), SEPERATOR)
 	if len(str) < 2 {
+		loggerDebug("string split error ", *buf)
 		return errors.New("str split error")
 	}
 
-	str[2] = strings.TrimRight(str[2], NULL)
-	str[2] = strings.TrimRight(str[2], NEWLINE)
-
-	difficulty, err := strconv.ParseUint(str[2], 10, 64)
+	diff, err := parseUint(str[2])
 	if err != nil {
+		loggerDebug("unable to parse uint ", err, NEWLINE)
 		return
 	}
 
 	switch str[0] {
 	case "CREATE_JOBS":
 		j.LastHash = str[1]
-		j.Difficulty = difficulty
+		j.Difficulty = diff
 	case "NO_TASK":
 		sleep := time.Duration(*wait) * time.Second
 		logger("no_task sleep for ", sleep, NEWLINE)
 		time.Sleep(sleep)
-		fallthrough
+		err = errors.New("no_task error")
 	default:
-		err = errors.New("task error")
+		loggerDebug("task command error ", str[0], NEWLINE)
+		err = errors.New("task command error")
 	}
 
 	return
@@ -233,6 +236,14 @@ func logger(msg ...interface{}) {
 	}
 }
 
+func loggerDebug(msg ...interface{}) {
+	if (!*debug) {
+		return
+	}
+
+	logger(msg...)
+}
+
 // read is a helper for reciving a string
 func read(conn net.Conn) (ret string, err error) {
 	buf := make([]byte, 128)
@@ -244,17 +255,13 @@ func read(conn net.Conn) (ret string, err error) {
 
 	ret = string(buf)
 	
-	if (*debug) {
-		logger("read ", ret)
-	}
+	loggerDebug("read ", ret)
 	return
 }
 
 // send is a helper for sending a string
 func send(conn net.Conn, str string) (err error) {
 	fmt.Fprintln(conn, str)
-	if (*debug) {
-		logger("send ", str, NEWLINE)
-	}
+	loggerDebug("send ", str, NEWLINE)
 	return
 }

@@ -5,11 +5,58 @@ import (
 )
 
 const (
-	//createJobResponse = "CREATE_JOBS,dabe4605c021f09509afba3e78493fec4d05f200,6"
+	createJobResponse = "CREATE_JOBS,dabe4605c021f09509afba3e78493fec4d05f200,6"
 	lastHash = "dabe4605c021f09509afba3e78493fec4d05f200"
-	//notask = "NO_TASK,,0"
+	notask = "NO_TASK,,0"
 	testName = "testUser"
 )
+
+func TestParseJobs(t *testing.T) {
+	j := &CreateJob{
+		User: testName,
+	}
+
+	test := string(createJobResponse)
+
+	err := j.parseJobs(&test)
+	if err != nil {
+		t.Errorf("err %s", err)
+		return
+	}
+
+	if (j.User != testName) {
+		t.Errorf("invalid user got %s expecting %s", j.User, testName)
+		return
+	}
+
+	if (j.LastHash != lastHash) {
+		t.Errorf("invalid lasthash got %s expecting %s", j.LastHash, lastHash)
+		return
+	}
+
+	if (j.Difficulty != uint64(6)){
+		t.Errorf("invalid difficulty got %v expected %v", j.Difficulty, uint64(6))
+		return
+	}
+}
+
+func TestParseJobNoTask(t *testing.T) {
+	j := &CreateJob{
+		User: testName,
+	}
+
+	tr := 1
+	wait = &tr
+	qu := true
+	quiet = &qu
+
+	test := string(notask)
+	err := j.parseJobs(&test)
+	if err == nil {
+		t.Error("should have returned an error")
+		return
+	}
+}
 
 func TestCreateJobs(t *testing.T) {
 	cj := &CreateJob{
@@ -59,6 +106,23 @@ func BenchmarkMakeJob(b *testing.B) {
 		err := makeJob(&j, uint64(1))
 		if err != nil {
 			b.Errorf("err %s", err)
+			return
+		}
+	}
+}
+
+func BenchmarkParseJob(b *testing.B) {
+	j := &CreateJob{
+		User: testName,
+	}
+
+	test := string(createJobResponse)
+
+	for i := 0; i < b.N; i++ {
+		err := j.parseJobs(&test)
+		if err != nil {
+			b.Errorf("err %s", err)
+			return
 		}
 	}
 }
