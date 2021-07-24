@@ -129,6 +129,8 @@ func makeJob(job *Job, diff uint64) (err error) {
 
 // createJobs loops to create 10 jobs.
 func (j *CreateJob) createJobs() (err error) {
+	j.User = *name
+
 	for i := 0; i < *batch; i++ {
 		job := Job{
 			LastHash: j.LastHash,
