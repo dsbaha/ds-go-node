@@ -26,6 +26,7 @@ var (
 	server = flag.String("server", "server.duinocoin.com:2817", "addr and port of server.")
 	name = flag.String("name", os.Getenv("MINERNAME"), "wallet/miner name.")
 	quiet = flag.Bool("quiet", false, "disable logging to console.")
+	debug = flag.Bool("debug", false, "console log send/receive messages.")
 	wait = flag.Int("wait", 10, "time to wait between task checks.")
 )
 
@@ -80,9 +81,9 @@ func main() {
 }
 
 // Provides a marshal for unit testing.
-func (j *CreateJob) marshal() (res []byte, err error) {
-	res, err = json.Marshal(*j)
-	return
+func (j *CreateJob) marshal() (string, error) {
+	res, err := json.Marshal(*j)
+	return string(res), err
 }
 
 // sendJobs sends the result of the job over the connection.
@@ -93,7 +94,10 @@ func (j *CreateJob) sendJobs(conn net.Conn) (err error) {
 		return
 	}
 
-	fmt.Fprintln(conn, string(res))
+	err = send(conn, res)
+	if err != nil {
+		return
+	}
 
 	resp, err := read(conn)
 	if err != nil {
@@ -178,7 +182,10 @@ func connect() (conn net.Conn, err error) {
 // sync is used to request jobs.
 func (j *CreateJob) sync(conn net.Conn) (err error) {
 
-	fmt.Fprintln(conn, "NODE")
+	err = send(conn, "NODE")
+	if err != nil {
+		return
+	}
 
 	resp, err := read(conn)
 	if err != nil {
@@ -209,5 +216,24 @@ func logger(msg ...interface{}) {
 func read(conn net.Conn) (ret string, err error) {
 	buf := make([]byte, 128)
 	_, err = conn.Read(buf)
-	return string(buf), err
+
+	if err != nil {
+		return
+	}
+
+	ret = string(buf)
+	
+	if (*debug) {
+		logger("read ", ret, NEWLINE)
+	}
+	return
+}
+
+// send is a helper for sending a string
+func send(conn net.Conn, str string) (err error) {
+	fmt.Fprintln(conn, str)
+	if (*debug) {
+		logger("send ", str, NEWLINE)
+	}
+	return
 }
