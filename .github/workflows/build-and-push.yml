@@ -1,0 +1,30 @@
+name: build-and-push
+on: [push]
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+      - name: Go Version
+        run: go version
+      - name: Install dependencies
+        run: go mod download
+      - name: Go Vet
+        run: go vet
+      - name: Run Test
+        run: go test
+      - name: Run Bench Test
+        run: go test -bench=.
+      - name: Run Build
+        run: CGO_ENABLED=0 go build
