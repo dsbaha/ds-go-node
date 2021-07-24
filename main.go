@@ -19,7 +19,6 @@ import (
 const (
 	SEPERATOR = ","
 	NEWLINE = "\n"
-	ENCODING = "utf-8"
 	NULL = "\x00"
 )
 

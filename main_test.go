@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	createJobResponse = "CREATE_JOBS,dabe4605c021f09509afba3e78493fec4d05f200,6"
+	//createJobResponse = "CREATE_JOBS,dabe4605c021f09509afba3e78493fec4d05f200,6"
 	lastHash = "dabe4605c021f09509afba3e78493fec4d05f200"
-	notask = "NO_TASK,,0"
+	//notask = "NO_TASK,,0"
 )
 
 func TestCreateJobs(t *testing.T) {
