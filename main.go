@@ -95,13 +95,12 @@ func (j *CreateJob) sendJobs(conn net.Conn) (err error) {
 
 	fmt.Fprintln(conn, string(res))
 
-	buf := make([]byte, 128)
-	_, err = conn.Read(buf)
+	resp, err := read(conn)
 	if err != nil {
 		return
 	}
 
-	logger("Submit Job Response: ", string(buf))
+	logger("Submit Job Response: ", resp)
 
 	return
 }
@@ -129,7 +128,7 @@ func (j *CreateJob) createJobs() (err error) {
 }
 
 // parseJobs parses the job request sent from the server.
-func (j *CreateJob) parseJobs(buf *[]byte) (err error) {
+func (j *CreateJob) parseJobs(buf *string) (err error) {
 
 	str := strings.Split(string(*buf), SEPERATOR)
 	if len(str) < 2 {
@@ -166,13 +165,12 @@ func connect() (conn net.Conn, err error) {
 		return
 	}
 
-	buf := make([]byte, 128)
-	_, err = conn.Read(buf)
+	resp, err := read(conn)
 	if err != nil {
 		return
 	}
 
-	logger("Connected to Server Version: ", string(buf), NEWLINE)
+	logger("Connected to Server Version: ", resp, NEWLINE)
 
 	return
 }
@@ -182,15 +180,14 @@ func (j *CreateJob) sync(conn net.Conn) (err error) {
 
 	fmt.Fprintln(conn, "NODE")
 
-	buf := make([]byte, 128)
-	_, err = conn.Read(buf)
+	resp, err := read(conn)
 	if err != nil {
 		return
 	}
 
-	logger("Get Job Response: ", string(buf))
+	logger("Get Job Response: ", resp)
 
-	return j.parseJobs(&buf)
+	return j.parseJobs(&resp)
 }
 
 // logger is the general purpose logger
@@ -206,4 +203,11 @@ func logger(msg ...interface{}) {
 	for _, v := range msg {
 		fmt.Print(v)
 	}
+}
+
+// read is a helper for reciving a string
+func read(conn net.Conn) (ret string, err error) {
+	buf := make([]byte, 128)
+	_, err = conn.Read(buf)
+	return string(buf), err
 }
