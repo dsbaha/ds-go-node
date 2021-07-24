@@ -29,6 +29,7 @@ var (
 	debug = flag.Bool("debug", false, "console log send/receive messages.")
 	wait = flag.Int("wait", 10, "time to wait between task checks.")
 	batch = flag.Int("batch", 10, "how many jobs to create.")
+	version = "0.1"
 )
 
 func init() {
@@ -38,6 +39,8 @@ func init() {
 
 func main() {
 	flag.Parse()
+
+	logger("Starting ds-go-node version ", version, NEWLINE)
 
 	if *name == "" {
 		logger("Name Not Set", NEWLINE)

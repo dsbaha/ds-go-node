@@ -16,6 +16,10 @@ go test -bench=.
 ```console
 $ MINERNAME=dsminer ./ds-go-node -help
 Usage of ./ds-go-node:
+  -batch int
+        how many jobs to create. (default 10)
+  -debug
+        console log send/receive messages.
   -name string
         wallet/miner name. (default "dsminer")
   -quiet
