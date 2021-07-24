@@ -55,7 +55,6 @@ func main() {
 		err := cj.sync(conn)
 		if err != nil {
 			if err == io.EOF {
-				conn.Close()
 				conn, _ = connect()
 			} else {
 				time.Sleep(time.Duration(*wait) * time.Second)
@@ -65,15 +64,14 @@ func main() {
 
 		err = cj.createJobs()
 		if err != nil {
-			logger("createjob error ", err)
+			logger("createjob error ", err, NEWLINE)
 			continue
 		}
 
 		err = cj.sendJobs(conn)
 		if err != nil {
-			logger("sendjob error", err)
+			logger("sendjob error ", err, NEWLINE)
 			if err == io.EOF {
-				conn.Close()
 				conn, _ = connect()
 			}
 			continue
