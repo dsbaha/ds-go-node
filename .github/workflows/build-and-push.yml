@@ -1,5 +1,5 @@
 name: build-and-push
-on: [push]
+on: [push, pull_request]
 jobs:
   golangci:
     name: lint
@@ -11,6 +11,7 @@ jobs:
         with:
           version: latest
   build:
+    needs: golangci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
