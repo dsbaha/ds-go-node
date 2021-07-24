@@ -28,6 +28,7 @@ var (
 	quiet = flag.Bool("quiet", false, "disable logging to console.")
 	debug = flag.Bool("debug", false, "console log send/receive messages.")
 	wait = flag.Int("wait", 10, "time to wait between task checks.")
+	batch = flag.Int("batch", 10, "how many jobs to create.")
 )
 
 func init() {
@@ -109,20 +110,33 @@ func (j *CreateJob) sendJobs(conn net.Conn) (err error) {
 	return
 }
 
+func makeJob(job *Job, diff uint64) (err error) {
+	job.Nonce = uint64(rand.Intn(int(diff * 100)))
+	nonce := strconv.FormatUint(job.Nonce, 10)
+	data := []byte(job.LastHash + nonce)
+
+	h := sha1.New()
+	h.Write(data)
+
+	job.ExpectedHash = hex.EncodeToString(h.Sum(nil))
+
+	if (*debug) {
+		logger("created job ", *job, NEWLINE)
+	}
+
+	return
+}
+
 // createJobs loops to create 10 jobs.
 func (j *CreateJob) createJobs() (err error) {
-	for i := 0; i < 10; i++ {
-		random := uint64(rand.Intn(int(j.Difficulty * 100)))
-		nonce := strconv.FormatUint(random, 10)
-		data := []byte(j.LastHash + nonce)
-
-		h := sha1.New()
-		h.Write(data)
-
+	for i := 0; i < *batch; i++ {
 		job := Job{
 			LastHash: j.LastHash,
-			ExpectedHash: hex.EncodeToString(h.Sum(nil)),
-			Nonce: random,
+		}
+
+		err = makeJob(&job, j.Difficulty)
+		if err != nil {
+			return
 		}
 
 		j.Jobs = append(j.Jobs, job)

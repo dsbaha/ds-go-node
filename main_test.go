@@ -27,3 +27,32 @@ func TestCreateJobs(t *testing.T) {
 	}
 
 }
+
+func TestMakeJob(t *testing.T) {
+	j := Job{
+		LastHash: lastHash,
+	}
+
+	err := makeJob(&j, uint64(1))
+	if err != nil {
+		t.Errorf("err %s", err)
+	}
+
+	if j.ExpectedHash == "" {
+		t.Errorf("empty expected hash")
+	}
+}
+
+func BenchmarkMakeJob(b *testing.B) {
+
+	j := Job{
+		LastHash: lastHash,
+	}
+
+	for i := 0; i < b.N; i++ {
+		err := makeJob(&j, uint64(1))
+		if err != nil {
+			b.Errorf("err %s", err)
+		}
+	}
+}
