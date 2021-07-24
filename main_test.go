@@ -8,10 +8,12 @@ const (
 	//createJobResponse = "CREATE_JOBS,dabe4605c021f09509afba3e78493fec4d05f200,6"
 	lastHash = "dabe4605c021f09509afba3e78493fec4d05f200"
 	//notask = "NO_TASK,,0"
+	testName = "testUser"
 )
 
 func TestCreateJobs(t *testing.T) {
 	cj := &CreateJob{
+		User: testName,
 		LastHash: lastHash,
 		Difficulty: uint64(6),
 	}
@@ -24,6 +26,10 @@ func TestCreateJobs(t *testing.T) {
 	_, err = cj.marshal()
 	if err != nil {
 		t.Errorf("err %s", err)
+	}
+
+	if cj.User == "" {
+		t.Error("user not set")
 	}
 
 }

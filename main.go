@@ -52,7 +52,9 @@ func main() {
 	}
 
 	for {
-		cj := &CreateJob{}
+		cj := &CreateJob{
+			User: *name,
+		}
 
 		err := cj.sync(conn)
 		if err != nil {
@@ -125,9 +127,8 @@ func makeJob(job *Job, diff uint64) (err error) {
 	return
 }
 
-// createJobs loops to create 10 jobs.
+// createJobs loops to create (*batch) amount of jobs.
 func (j *CreateJob) createJobs() (err error) {
-	j.User = *name
 
 	for i := 0; i < *batch; i++ {
 		job := Job{
