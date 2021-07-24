@@ -58,8 +58,6 @@ func main() {
 		if err != nil {
 			if err == io.EOF {
 				conn, _ = connect()
-			} else {
-				time.Sleep(time.Duration(*wait) * time.Second)
 			}
 			continue
 		}
@@ -168,6 +166,9 @@ func (j *CreateJob) parseJobs(buf *string) (err error) {
 		j.LastHash = str[1]
 		j.Difficulty = difficulty
 	case "NO_TASK":
+		sleep := time.Duration(*wait) * time.Second
+		logger("no_task sleep for ", sleep, NEWLINE)
+		time.Sleep(sleep)
 		fallthrough
 	default:
 		err = errors.New("task error")
@@ -240,7 +241,7 @@ func read(conn net.Conn) (ret string, err error) {
 	ret = string(buf)
 	
 	if (*debug) {
-		logger("read ", ret, NEWLINE)
+		logger("read ", ret)
 	}
 	return
 }
