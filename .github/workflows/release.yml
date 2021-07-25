@@ -20,4 +20,3 @@ jobs:
         goarch: ${{ matrix.goarch }}
         goversion: "https://golang.org/dl/go1.16.6.linux-amd64.tar.gz"
         overwrite: TRUE
-        build_command: CGO_ENABLED=0 go build
