@@ -30,7 +30,7 @@ var (
 	debug = flag.Bool("debug", false, "console log send/receive messages.")
 	wait = flag.Int("wait", 10, "time to wait between task checks.")
 	batch = flag.Int("batch", 10, "how many jobs to create.")
-	version = "0.2"
+	version = "0.2.1"
 )
 
 func init() {
@@ -41,10 +41,10 @@ func init() {
 func main() {
 	flag.Parse()
 
-	logger("Starting ds-go-node version ", version, NEWLINE)
+	logger("Starting ds-go-node version ", version)
 
 	if *name == "" {
-		logger("Name Not Set", NEWLINE)
+		logger("Name Not Set")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -81,7 +81,7 @@ func main() {
 
 // recoverLoop serves as a problem recovery mechanism.
 func recoverLoop(conn net.Conn, err error) (net.Conn) {
-	loggerDebug("attempting to recover from ", err, NEWLINE)
+	loggerDebug("attempting to recover from ", err)
 
 	// Should allow multiple attempts to reconnect.
 	if (err == io.EOF || strings.Contains(err.Error(), "connection refused")) {
@@ -95,14 +95,14 @@ func recoverLoop(conn net.Conn, err error) (net.Conn) {
 		}
 	}
 
-	loggerDebug("continuing from recoverLoop", NEWLINE)
+	loggerDebug("continuing from recoverLoop")
 	return conn
 }
 
 // sleep provides a generic sleep task.
 func sleepTask(msg ...interface{}) {
 	sleep := time.Duration(*wait) * time.Second
-	sleepmsg := fmt.Sprintf(" sleeping for %v%v", sleep, NEWLINE)
+	sleepmsg := fmt.Sprintf(" sleeping for %v", sleep)
 	msg = append(msg, sleepmsg)
 	logger(msg...)
 	time.Sleep(sleep)
@@ -146,7 +146,7 @@ func makeJob(job *Job, diff uint64) (err error) {
 	h.Write(data)
 
 	job.ExpectedHash = hex.EncodeToString(h.Sum(nil))
-	loggerDebug("created job ", *job, NEWLINE)
+	loggerDebug("created job ", *job)
 	return
 }
 
@@ -166,16 +166,14 @@ func (j *CreateJob) createJobs() (err error) {
 		j.Jobs = append(j.Jobs, job)
 	}
 
-	logger("created ", *batch, " jobs", NEWLINE)
+	logger("created ", *batch, " jobs")
 
 	return
 }
 
-func parseUint(str string) (ret uint64, err error) {
-	str = strings.TrimRight(str, NULL)
-	str = strings.TrimRight(str, NEWLINE)
-	ret, err = strconv.ParseUint(str, 10, 64)
-	return
+// parses string to uint64 base 10
+func parseUint(str string) (uint64, error) {
+	return strconv.ParseUint(str, 10, 64)
 }
 
 // parseJobs parses the job request sent from the server.
@@ -189,7 +187,7 @@ func (j *CreateJob) parseJobs(buf *string) (err error) {
 
 	diff, err := parseUint(str[2])
 	if err != nil {
-		loggerDebug("unable to parse uint ", err, NEWLINE)
+		loggerDebug("unable to parse uint ", err)
 		return
 	}
 
@@ -201,7 +199,7 @@ func (j *CreateJob) parseJobs(buf *string) (err error) {
 		sleepTask("no_task")
 		err = errors.New("no_task error")
 	default:
-		loggerDebug("task command error ", str[0], NEWLINE)
+		loggerDebug("task command error ", str[0])
 		err = errors.New("task command error")
 	}
 
@@ -210,7 +208,7 @@ func (j *CreateJob) parseJobs(buf *string) (err error) {
 
 // connect is used to connect to the server.
 func connect() (conn net.Conn, err error) {
-	logger("Connecting to Server: ", *server, NEWLINE)
+	logger("Connecting to Server: ", *server)
 
 	conn, err = net.Dial("tcp", *server)
 	if err != nil {
@@ -222,7 +220,7 @@ func connect() (conn net.Conn, err error) {
 		return
 	}
 
-	logger("Connected to Server Version: ", resp, NEWLINE)
+	logger("Connected to Server Version: ", resp)
 
 	return
 }
@@ -258,6 +256,8 @@ func logger(msg ...interface{}) {
 	for _, v := range msg {
 		fmt.Print(v)
 	}
+
+	fmt.Println()
 }
 
 func loggerDebug(msg ...interface{}) {
@@ -265,10 +265,17 @@ func loggerDebug(msg ...interface{}) {
 		return
 	}
 
-	dbgmsg := []interface{}{"DEBUG "}
+	dbgmsg := []interface{}{"[DEBUG] "}
 	msg = append(dbgmsg, msg...)
 
 	logger(msg...)
+}
+
+// cleanString cleans a string
+func cleanString(str string) (ret string) {
+	ret = strings.TrimRight(str, NULL)
+	ret = strings.TrimRight(ret, NEWLINE)
+	return
 }
 
 // read is a helper for reciving a string
@@ -281,8 +288,7 @@ func read(conn net.Conn) (ret string, err error) {
 		return
 	}
 
-	ret = string(buf)
-	
+	ret = cleanString(string(buf))
 	loggerDebug("read ", ret)
 	return
 }
@@ -290,6 +296,6 @@ func read(conn net.Conn) (ret string, err error) {
 // send is a helper for sending a string
 func send(conn net.Conn, str string) (err error) {
 	fmt.Fprintln(conn, str)
-	loggerDebug("send ", str, NEWLINE)
+	loggerDebug("send ", str)
 	return
 }
