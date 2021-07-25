@@ -104,7 +104,7 @@ func sleepTask(msg ...interface{}) {
 	sleep := time.Duration(*wait) * time.Second
 	sleepmsg := fmt.Sprintf(" sleeping for %v%v", sleep, NEWLINE)
 	msg = append(msg, sleepmsg)
-	loggerDebug(msg...)
+	logger(msg...)
 	time.Sleep(sleep)
 }
 
@@ -165,6 +165,8 @@ func (j *CreateJob) createJobs() (err error) {
 
 		j.Jobs = append(j.Jobs, job)
 	}
+
+	logger("created ", *batch, " jobs", NEWLINE)
 
 	return
 }
@@ -263,15 +265,19 @@ func loggerDebug(msg ...interface{}) {
 		return
 	}
 
+	dbgmsg := []interface{}{"DEBUG "}
+	msg = append(dbgmsg, msg...)
+
 	logger(msg...)
 }
 
 // read is a helper for reciving a string
 func read(conn net.Conn) (ret string, err error) {
 	buf := make([]byte, BUF_SIZE)
-	_, err = conn.Read(buf)
+	n, err := conn.Read(buf)
 
-	if err != nil {
+	//if error, or no bytes read
+	if (err != nil || n <= 0){
 		return
 	}
 
