@@ -20,6 +20,7 @@ const (
 	SEPERATOR = ","
 	NEWLINE = "\n"
 	NULL = "\x00"
+	BUF_SIZE = 256
 )
 
 var (
@@ -29,7 +30,7 @@ var (
 	debug = flag.Bool("debug", false, "console log send/receive messages.")
 	wait = flag.Int("wait", 10, "time to wait between task checks.")
 	batch = flag.Int("batch", 10, "how many jobs to create.")
-	version = "0.1"
+	version = "0.2"
 )
 
 func init() {
@@ -50,8 +51,7 @@ func main() {
 
 	conn, err := connect()
 	if err != nil {
-		logger("Connection Error ", err)
-		os.Exit(1)
+		recoverLoop(conn, err)
 	}
 
 	for {
@@ -61,27 +61,51 @@ func main() {
 
 		err := cj.sync(conn)
 		if err != nil {
-			if err == io.EOF {
-				conn, _ = connect()
-			}
+			recoverLoop(conn, err)
 			continue
 		}
 
 		err = cj.createJobs()
 		if err != nil {
-			loggerDebug("createjob error ", err, NEWLINE)
+			recoverLoop(conn, err)
 			continue
 		}
 
 		err = cj.sendJobs(conn)
 		if err != nil {
-			loggerDebug("sendjob error ", err, NEWLINE)
-			if err == io.EOF {
-				conn, _ = connect()
-			}
+			recoverLoop(conn, err)
 			continue
 		}
 	}
+}
+
+// recoverLoop serves as a problem recovery mechanism.
+func recoverLoop(conn net.Conn, err error) (net.Conn) {
+	loggerDebug("attempting to recover from ", err, NEWLINE)
+
+	// Should allow multiple attempts to reconnect.
+	if (err == io.EOF || strings.Contains(err.Error(), "connection refused")) {
+		for {
+			conn, err = connect()
+			if err == nil {
+				break
+			}
+			//sleep between retries
+			sleepTask(err.Error())
+		}
+	}
+
+	loggerDebug("continuing from recoverLoop", NEWLINE)
+	return conn
+}
+
+// sleep provides a generic sleep task.
+func sleepTask(msg ...interface{}) {
+	sleep := time.Duration(*wait) * time.Second
+	sleepmsg := fmt.Sprintf(" sleeping for %v%v", sleep, NEWLINE)
+	msg = append(msg, sleepmsg)
+	loggerDebug(msg...)
+	time.Sleep(sleep)
 }
 
 // Provides a marshal for unit testing.
@@ -172,9 +196,7 @@ func (j *CreateJob) parseJobs(buf *string) (err error) {
 		j.LastHash = str[1]
 		j.Difficulty = diff
 	case "NO_TASK":
-		sleep := time.Duration(*wait) * time.Second
-		logger("no_task sleep for ", sleep, NEWLINE)
-		time.Sleep(sleep)
+		sleepTask("no_task")
 		err = errors.New("no_task error")
 	default:
 		loggerDebug("task command error ", str[0], NEWLINE)
@@ -246,7 +268,7 @@ func loggerDebug(msg ...interface{}) {
 
 // read is a helper for reciving a string
 func read(conn net.Conn) (ret string, err error) {
-	buf := make([]byte, 128)
+	buf := make([]byte, BUF_SIZE)
 	_, err = conn.Read(buf)
 
 	if err != nil {
