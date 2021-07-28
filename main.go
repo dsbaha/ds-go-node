@@ -83,8 +83,18 @@ func main() {
 func recoverLoop(conn net.Conn, err error) (net.Conn) {
 	loggerDebug("attempting to recover from ", err)
 
+	if nerr, ok := err.(*net.OpError); ok {
+		switch nerr.Err.(type) {
+		case *os.SyscallError:
+			conn.Close()
+			conn = nil
+		default:
+			conn = nil
+		}
+	}
+
 	// Should allow multiple attempts to reconnect.
-	if (err == io.EOF || strings.Contains(err.Error(), "connection refused")) {
+	if (err == io.EOF || conn == nil) {
 		for {
 			conn, err = connect()
 			if err == nil {
@@ -289,13 +299,13 @@ func read(conn net.Conn) (ret string, err error) {
 	}
 
 	ret = cleanString(string(buf))
-	loggerDebug("read ", ret)
+	loggerDebug("read ", n, " bytes ", ret)
 	return
 }
 
 // send is a helper for sending a string
 func send(conn net.Conn, str string) (err error) {
-	fmt.Fprintln(conn, str)
-	loggerDebug("send ", str)
+	n, err := fmt.Fprintln(conn, str)
+	loggerDebug("send ", n, " bytes ", str)
 	return
 }
