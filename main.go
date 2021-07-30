@@ -1,35 +1,35 @@
 package main
 
 import (
-	"io"
-	"os"
-	"fmt"
-	"net"
-	"flag"
-	"time"
-	"errors"
-	"strconv"
-	"strings"
-	"math/rand"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+	"math/rand"
+	"net"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 const (
 	SEPERATOR = ","
-	NEWLINE = "\n"
-	NULL = "\x00"
-	BUF_SIZE = 256
+	NEWLINE   = "\n"
+	NULL      = "\x00"
+	BUF_SIZE  = 256
 )
 
 var (
-	server = flag.String("server", "server.duinocoin.com:2817", "addr and port of server.")
-	name = flag.String("name", os.Getenv("MINERNAME"), "wallet/miner name.")
-	quiet = flag.Bool("quiet", false, "disable logging to console.")
-	debug = flag.Bool("debug", false, "console log send/receive messages.")
-	wait = flag.Int("wait", 10, "time to wait between task checks.")
-	batch = flag.Int("batch", 10, "how many jobs to create.")
+	server  = flag.String("server", "server.duinocoin.com:2817", "addr and port of server.")
+	name    = flag.String("name", os.Getenv("MINERNAME"), "wallet/miner name.")
+	quiet   = flag.Bool("quiet", false, "disable logging to console.")
+	debug   = flag.Bool("debug", false, "console log send/receive messages.")
+	wait    = flag.Int("wait", 10, "time to wait between task checks.")
+	batch   = flag.Int("batch", 10, "how many jobs to create.")
 	version = "0.2.1"
 )
 
@@ -80,7 +80,7 @@ func main() {
 }
 
 // recoverLoop serves as a problem recovery mechanism.
-func recoverLoop(conn net.Conn, err error) (net.Conn) {
+func recoverLoop(conn net.Conn, err error) net.Conn {
 	loggerDebug("attempting to recover from ", err)
 
 	if nerr, ok := err.(*net.OpError); ok {
@@ -94,7 +94,7 @@ func recoverLoop(conn net.Conn, err error) (net.Conn) {
 	}
 
 	// Should allow multiple attempts to reconnect.
-	if (err == io.EOF || conn == nil) {
+	if err == io.EOF || conn == nil {
 		for {
 			conn, err = connect()
 			if err == nil {
@@ -256,7 +256,7 @@ func (j *CreateJob) sync(conn net.Conn) (err error) {
 // logger is the general purpose logger
 // which can be turned off w/ cmd line switch
 func logger(msg ...interface{}) {
-	if (*quiet) {
+	if *quiet {
 		return
 	}
 
@@ -271,7 +271,7 @@ func logger(msg ...interface{}) {
 }
 
 func loggerDebug(msg ...interface{}) {
-	if (!*debug) {
+	if !*debug {
 		return
 	}
 
@@ -294,7 +294,7 @@ func read(conn net.Conn) (ret string, err error) {
 	n, err := conn.Read(buf)
 
 	//if error, or no bytes read
-	if (err != nil || n <= 0){
+	if err != nil || n <= 0 {
 		return
 	}
 

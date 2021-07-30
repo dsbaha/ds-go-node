@@ -6,9 +6,9 @@ import (
 
 const (
 	createJobResponse = "CREATE_JOBS,dabe4605c021f09509afba3e78493fec4d05f200,6"
-	lastHash = "dabe4605c021f09509afba3e78493fec4d05f200"
-	notask = "NO_TASK,,0"
-	testName = "testUser"
+	lastHash          = "dabe4605c021f09509afba3e78493fec4d05f200"
+	notask            = "NO_TASK,,0"
+	testName          = "testUser"
 )
 
 func TestParseJobs(t *testing.T) {
@@ -24,17 +24,17 @@ func TestParseJobs(t *testing.T) {
 		return
 	}
 
-	if (j.User != testName) {
+	if j.User != testName {
 		t.Errorf("invalid user got %s expecting %s", j.User, testName)
 		return
 	}
 
-	if (j.LastHash != lastHash) {
+	if j.LastHash != lastHash {
 		t.Errorf("invalid lasthash got %s expecting %s", j.LastHash, lastHash)
 		return
 	}
 
-	if (j.Difficulty != uint64(6)){
+	if j.Difficulty != uint64(6) {
 		t.Errorf("invalid difficulty got %v expected %v", j.Difficulty, uint64(6))
 		return
 	}
@@ -60,8 +60,8 @@ func TestParseJobNoTask(t *testing.T) {
 
 func TestCreateJobs(t *testing.T) {
 	cj := &CreateJob{
-		User: testName,
-		LastHash: lastHash,
+		User:       testName,
+		LastHash:   lastHash,
 		Difficulty: uint64(6),
 	}
 
